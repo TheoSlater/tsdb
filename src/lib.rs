@@ -1,32 +1,36 @@
+use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct DataPoint {
-    timestamp: DateTime<Utc>,
-    value: f64,
+pub struct FinancialDataPoint {
+    pub timestamp: DateTime<Utc>,
+    pub open: f64,
+    pub close: f64,
+    pub high: f64,
+    pub low: f64,
+    pub volume: u64,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
-pub struct TimeSeries {
-    data: HashMap<String, Vec<DataPoint>>,
+pub struct FinancialTimeSeries {
+    pub data: HashMap<String, Vec<FinancialDataPoint>>, // Keyed by asset symbol (e.g., "AAPL", "GOOGL")
 }
 
-impl TimeSeries {
+impl FinancialTimeSeries {
     pub fn new() -> Self {
-        TimeSeries {
+        FinancialTimeSeries {
             data: HashMap::new(),
         }
     }
 
-    pub fn add_data(&mut self, measurement: String, timestamp: DateTime<Utc>, value: f64) {
-        let entry = self.data.entry(measurement).or_insert_with(Vec::new);
-        entry.push(DataPoint { timestamp, value });
+    pub fn add_data(&mut self, symbol: String, timestamp: DateTime<Utc>, open: f64, close: f64, high: f64, low: f64, volume: u64) {
+        let entry = self.data.entry(symbol).or_insert_with(Vec::new);
+        entry.push(FinancialDataPoint { timestamp, open, close, high, low, volume });
     }
 
-    pub fn get_data(&self, measurement: &str) -> Option<&Vec<DataPoint>> {
-        self.data.get(measurement)
+    pub fn get_data(&self, symbol: &str) -> Option<&Vec<FinancialDataPoint>> {
+        self.data.get(symbol)
     }
 
     pub fn to_json(&self) -> Result<String, serde_json::Error> {
@@ -37,11 +41,14 @@ impl TimeSeries {
         serde_json::from_str(json)
     }
 
-    pub fn query_data(&self, measurement: &str, start: DateTime<Utc>, end: DateTime<Utc>) -> Option<Vec<&DataPoint>> {
-        self.data.get(measurement).map(|data_points| {
-            data_points.iter()
-                .filter(|data_point| data_point.timestamp >= start && data_point.timestamp <= end)
-                .collect()
-        })
+    pub fn save_to_file(&self, filename: &str) -> std::io::Result<()> {
+        let json_data = self.to_json().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        std::fs::write(filename, json_data)?;
+        Ok(())
+    }
+
+    pub fn load_from_file(filename: &str) -> std::io::Result<Self> {
+        let json_data = std::fs::read_to_string(filename)?;
+        Self::from_json(&json_data).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }
 }
