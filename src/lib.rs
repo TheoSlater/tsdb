@@ -36,4 +36,12 @@ impl TimeSeries {
     pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(json)
     }
+
+    pub fn query_data(&self, measurement: &str, start: DateTime<Utc>, end: DateTime<Utc>) -> Option<Vec<&DataPoint>> {
+        self.data.get(measurement).map(|data_points| {
+            data_points.iter()
+                .filter(|data_point| data_point.timestamp >= start && data_point.timestamp <= end)
+                .collect()
+        })
+    }
 }
