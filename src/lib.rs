@@ -1,33 +1,31 @@
-use wasm_bindgen::prelude::*;
-use chrono::{DateTime, Utc};
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
+use chrono::{DateTime, Utc};
 
-#[wasm_bindgen]
-pub struct TimeSeriesData {
-    data: HashMap<String, Vec<(DateTime<Utc>, f64)>>, // Maps the data to timestamps, values
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DataPoint {
+    timestamp: DateTime<Utc>,
+    value: f64,
 }
 
-#[wasm_bindgen]
-impl TimeSeriesData {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> TimeSeriesData {
-        TimeSeriesData {
+#[derive(Default)]
+pub struct TimeSeries {
+    data: HashMap<String, Vec<DataPoint>>,
+}
+
+impl TimeSeries {
+    pub fn new() -> Self {
+        TimeSeries {
             data: HashMap::new(),
         }
     }
 
-    pub fn add_data(&mut self, measurement: String, timestamp: String, value: f64) {
-        let time: DateTime<Utc> = timestamp.parse().unwrap();
-        self.data.entry(measurement).or_insert_with(Vec::new).push((time, value));
+    pub fn add_data(&mut self, measurement: String, timestamp: DateTime<Utc>, value: f64) {
+        let entry = self.data.entry(measurement).or_insert_with(Vec::new);
+        entry.push(DataPoint { timestamp, value });
     }
 
-    pub fn get_data(&self, measurement: String) -> JsValue {
-        let binding = Vec::new();
-        let entries = self.data.get(&measurement).unwrap_or(&binding);
-        let json = serde_json::to_string(entries).unwrap(); // i think this serializes to JSON string
-        let js_value = JsValue::from_str(&json); // Create JsValue from the JSON string
-        js_value // returns it
+    pub fn get_data(&self, measurement: &str) -> Option<&Vec<DataPoint>> {
+        self.data.get(measurement)
     }
-    
-    
 }
