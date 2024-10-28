@@ -8,7 +8,7 @@ pub struct DataPoint {
     value: f64,
 }
 
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct TimeSeries {
     data: HashMap<String, Vec<DataPoint>>,
 }
@@ -27,5 +27,13 @@ impl TimeSeries {
 
     pub fn get_data(&self, measurement: &str) -> Option<&Vec<DataPoint>> {
         self.data.get(measurement)
+    }
+
+    pub fn to_json(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(self)
+    }
+
+    pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_str(json)
     }
 }
