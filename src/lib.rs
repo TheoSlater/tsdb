@@ -1,5 +1,3 @@
-// lib.rs
-
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
@@ -16,7 +14,7 @@ pub struct FinancialDataPoint {
 
 #[derive(Debug, Default)]
 pub struct FinancialTimeSeries {
-    data: HashMap<String, Vec<FinancialDataPoint>>, // Data for each asset symbol
+    pub data: HashMap<String, Vec<FinancialDataPoint>>, // Data for each asset symbol
 }
 
 impl FinancialTimeSeries {
