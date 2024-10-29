@@ -1,3 +1,5 @@
+// main.rs
+
 use tsdb::FinancialTimeSeries;
 use chrono::Utc;
 
@@ -7,11 +9,11 @@ fn main() {
     // Initialize a new FinancialTimeSeries or load from file
     let mut financial_time_series = match FinancialTimeSeries::load_from_file(filename) {
         Ok(ts) => ts,
-        Err(_) => FinancialTimeSeries::new(), // Create a new one if loading fails
+        Err(_) => FinancialTimeSeries::new(),
     };
 
     let now = Utc::now();
-    
+
     // Add some financial data
     financial_time_series.add_data("AAPL".to_string(), now, 150.0, 152.0, 153.0, 149.5, 1000000);
     financial_time_series.add_data("AAPL".to_string(), now + chrono::Duration::seconds(60), 152.0, 151.0, 155.0, 150.0, 1200000);
@@ -24,13 +26,17 @@ fn main() {
         println!("Data successfully saved to {}", filename);
     }
 
-    // Print the current state
-    println!("Current Financial Time Series: {:?}", financial_time_series);
-
     // Query and print the data for AAPL
     if let Some(data) = financial_time_series.get_data("AAPL") {
         println!("Retrieved financial data for AAPL: {:?}", data);
     } else {
         println!("No data found for the specified asset.");
+    }
+
+    // Print moving average
+    if let Some(moving_avg) = financial_time_series.moving_average("AAPL", 2) {
+        println!("Moving average for AAPL over 2 data points: {:?}", moving_avg);
+    } else {
+        println!("Could not compute moving average for the specified asset.");
     }
 }
