@@ -1,13 +1,12 @@
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-use std::io; // Keep only necessary imports
+use std::io; 
 use tsdb::FinancialTimeSeries;
 
 fn main() {
     let mut tsdb = FinancialTimeSeries::new();
 
-    // Attempt to load existing data from the file
     if let Ok(loaded_data) = FinancialTimeSeries::load_from_file("financial_data.json") {
-        tsdb = loaded_data; // Use loaded data
+        tsdb = loaded_data; 
         println!("Loaded existing data from financial_data.json.");
     } else {
         eprintln!("Error loading data. Starting fresh.");
@@ -26,18 +25,28 @@ fn main() {
             let symbol = input[9..].trim(); // Get the symbol after "retrieve "
             let data = tsdb.get_data(symbol);
             if let Some(data) = data {
-                println!("Retrieved data for symbol '{}': {:?}", symbol, data);
+                println!("Retrieved data for symbol '{}':", symbol);
+                for point in data {
+                    println!(
+                        "Timestamp: {}\nOpening Price: {:.2}\nClosing Price: {:.2}\nHighest Price: {:.2}\nLowest Price: {:.2}\nVolume: {}\n",
+                        point.timestamp.to_rfc3339(), // honestly i think this just formats the timestamp to an actual timestamp
+                        point.open,
+                        point.close,
+                        point.high,
+                        point.low,
+                        point.volume
+                    );
+                }
             } else {
                 println!("No data found for symbol '{}'.", symbol);
             }
-            continue; // Go back to the loop to allow for more input
+            continue; 
         }
 
         if input.eq_ignore_ascii_case("exit") {
             break; 
         }
 
-        // Continue with the process to collect new data...
         println!("Enter the asset symbol:");
         let mut symbol = String::new();
         io::stdin().read_line(&mut symbol).expect("Failed to read line");
@@ -76,11 +85,9 @@ fn main() {
         io::stdin().read_line(&mut volume_input).expect("Failed to read line");
         let volume: u64 = volume_input.trim().parse().expect("Invalid number format");
 
-        // Add the collected data to the time series
         tsdb.add_data(symbol.to_string(), timestamp, open, close, high, low, volume);
         println!("Data for {} added successfully.", symbol);
         
-        // Print the current data structure for debugging
         println!("Current data: {:?}", tsdb);
     }
 
