@@ -3,9 +3,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration as StdDuration;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinancialDataPoint {
@@ -20,14 +17,12 @@ pub struct FinancialDataPoint {
 #[derive(Debug, Default)]
 pub struct FinancialTimeSeries {
     data: HashMap<String, Vec<FinancialDataPoint>>, // Data for each asset symbol
-    cache: Arc<Mutex<HashMap<String, Vec<FinancialDataPoint>>>>, // Thread-safe cache
 }
 
 impl FinancialTimeSeries {
     pub fn new() -> Self {
         FinancialTimeSeries {
             data: HashMap::new(),
-            cache: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -42,19 +37,7 @@ impl FinancialTimeSeries {
         volume: u64,
     ) {
         let data_point = FinancialDataPoint { timestamp, open, close, high, low, volume };
-        self.data.entry(symbol.clone()).or_insert_with(Vec::new).push(data_point.clone());
-
-        let mut cache = self.cache.lock().expect("Failed to lock cache");
-        cache.entry(symbol.clone()).or_insert_with(Vec::new).push(data_point.clone());
-
-        let filename = format!("{}_timeseries_data.json", symbol);
-        let data_clone = self.data.clone();
-        thread::spawn(move || {
-            thread::sleep(StdDuration::from_secs(60));
-            if let Ok(json_data) = serde_json::to_string(&data_clone) {
-                let _ = std::fs::write(&filename, json_data);
-            }
-        });
+        self.data.entry(symbol.clone()).or_insert_with(Vec::new).push(data_point);
     }
 
     pub fn get_data(&self, symbol: &str) -> Option<&Vec<FinancialDataPoint>> {
@@ -92,9 +75,6 @@ impl FinancialTimeSeries {
         let json_data = std::fs::read_to_string(filename)?;
         let data: HashMap<String, Vec<FinancialDataPoint>> = serde_json::from_str(&json_data)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-        Ok(FinancialTimeSeries {
-            data,
-            cache: Arc::new(Mutex::new(HashMap::new())),
-        })
+        Ok(FinancialTimeSeries { data })
     }
 }

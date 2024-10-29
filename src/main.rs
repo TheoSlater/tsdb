@@ -1,42 +1,67 @@
 // main.rs
 
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use std::io::{self};
 use tsdb::FinancialTimeSeries;
-use chrono::Utc;
 
 fn main() {
-    let filename = "financial_timeseries_data.json";
+    let mut tsdb = FinancialTimeSeries::new();
 
-    // Initialize a new FinancialTimeSeries or load from file
-    let mut financial_time_series = match FinancialTimeSeries::load_from_file(filename) {
-        Ok(ts) => ts,
-        Err(_) => FinancialTimeSeries::new(),
-    };
+    println!("Welcome to the Financial Time Series Database!");
 
-    let now = Utc::now();
+    loop {
+        println!("\nEnter the asset symbol (or type 'exit' to finish):");
+        let mut symbol = String::new();
+        io::stdin().read_line(&mut symbol).expect("Failed to read line");
+        let symbol = symbol.trim();
 
-    // Add some financial data
-    financial_time_series.add_data("AAPL".to_string(), now, 150.0, 152.0, 153.0, 149.5, 1000000);
-    financial_time_series.add_data("AAPL".to_string(), now + chrono::Duration::seconds(60), 152.0, 151.0, 155.0, 150.0, 1200000);
-    financial_time_series.add_data("AAPL".to_string(), now + chrono::Duration::seconds(120), 151.0, 154.0, 155.5, 150.5, 900000);
+        if symbol.eq_ignore_ascii_case("exit") {
+            break; 
+        }
 
-    // Save to JSON file
-    if let Err(e) = financial_time_series.save_to_file(filename) {
-        eprintln!("Failed to save to file: {}", e);
-    } else {
-        println!("Data successfully saved to {}", filename);
+        println!("Enter the timestamp (YYYY-MM-DD HH:MM:SS):");
+        let mut timestamp_input = String::new();
+        io::stdin().read_line(&mut timestamp_input).expect("Failed to read line");
+
+        let naive_datetime = NaiveDateTime::parse_from_str(timestamp_input.trim(), "%Y-%m-%d %H:%M:%S")
+            .expect("Invalid timestamp format");
+        let timestamp: DateTime<Utc> = Utc.from_utc_datetime(&naive_datetime);
+
+
+        println!("Enter the opening price:");
+        let mut open_input = String::new();
+        io::stdin().read_line(&mut open_input).expect("Failed to read line");
+        let open: f64 = open_input.trim().parse().expect("Invalid number format");
+
+        println!("Enter the closing price:");
+        let mut close_input = String::new();
+        io::stdin().read_line(&mut close_input).expect("Failed to read line");
+        let close: f64 = close_input.trim().parse().expect("Invalid number format");
+
+        println!("Enter the highest price:");
+        let mut high_input = String::new();
+        io::stdin().read_line(&mut high_input).expect("Failed to read line");
+        let high: f64 = high_input.trim().parse().expect("Invalid number format");
+
+        println!("Enter the lowest price:");
+        let mut low_input = String::new();
+        io::stdin().read_line(&mut low_input).expect("Failed to read line");
+        let low: f64 = low_input.trim().parse().expect("Invalid number format");
+
+        println!("Enter the volume:");
+        let mut volume_input = String::new();
+        io::stdin().read_line(&mut volume_input).expect("Failed to read line");
+        let volume: u64 = volume_input.trim().parse().expect("Invalid number format");
+
+        // Add the collected data to the time series
+        tsdb.add_data(symbol.to_string(), timestamp, open, close, high, low, volume);
+        println!("Data for {} added successfully.", symbol);
     }
 
-    // Query and print the data for AAPL
-    if let Some(data) = financial_time_series.get_data("AAPL") {
-        println!("Retrieved financial data for AAPL: {:?}", data);
+    // Example of saving to a file
+    if let Err(e) = tsdb.save_to_file("financial_data.json") {
+        eprintln!("Error saving data: {}", e);
     } else {
-        println!("No data found for the specified asset.");
-    }
-
-    // Print moving average
-    if let Some(moving_avg) = financial_time_series.moving_average("AAPL", 2) {
-        println!("Moving average for AAPL over 2 data points: {:?}", moving_avg);
-    } else {
-        println!("Could not compute moving average for the specified asset.");
+        println!("Data saved successfully to financial_data.json.");
     }
 }
