@@ -12,7 +12,7 @@ pub struct FinancialDataPoint {
     pub volume: u64,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct FinancialTimeSeries {
     pub data: HashMap<String, Vec<FinancialDataPoint>>, // Data for each asset symbol
 }

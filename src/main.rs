@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-use std::io; 
+use std::io;
 use tsdb::FinancialTimeSeries;
 
 fn main() {
@@ -22,14 +22,14 @@ fn main() {
 
         // Check for retrieve command
         if input.starts_with("retrieve ") {
-            let symbol = input[9..].trim(); // Get the symbol after "retrieve "
+            let symbol = input[9..].trim();
             let data = tsdb.get_data(symbol);
             if let Some(data) = data {
                 println!("Retrieved data for symbol '{}':", symbol);
                 for point in data {
                     println!(
                         "Timestamp: {}\nOpening Price: {:.2}\nClosing Price: {:.2}\nHighest Price: {:.2}\nLowest Price: {:.2}\nVolume: {}\n",
-                        point.timestamp.to_rfc3339(), // honestly i think this just formats the timestamp to an actual timestamp
+                        point.timestamp.to_rfc3339(),
                         point.open,
                         point.close,
                         point.high,
